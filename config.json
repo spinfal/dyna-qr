@@ -1,0 +1,11 @@
+{
+    "port": "443",
+    "domain": "localhost:443",
+    "qrOptions": {
+        "margin": 1.5,
+        "color": {
+            "dark":"#F4C2C2",
+            "light":"#000000"
+        }
+    }
+}

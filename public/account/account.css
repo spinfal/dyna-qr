@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
+
+:root {
+    --color-background: #31037D;
+    --color-background-secondary: #280166;
+    --axis-x: 1px;
+    --axis-y: 1rem;
+    --delay: 10;
+    --color-black: #000;
+    --color-white: #fff;
+    --color-orange: #D49C3D;
+    --color-red: #D14B3D;
+    --color-violet: #CF52EB;
+    --color-blue: #44A3F7;
+    --color-green: #5ACB3C;
+    --color-yellow: #DEBF40;
+    --color-foreground: var(--color-white);
+    --font-name: Righteous;
+}
+  
+html, body {
+    font-size: 24px;
+    overflow-y: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+  
+body {
+    font-family: var(--font-name);
+    color: var(--color-white);
+    background-color: var(--color-background);
+}
+
+/* login and register css */
+.form-group {
+    overflow-x: hidden;
+    margin-top: 40px;
+}
+.form-group > input {
+    width: 100%;
+    height: 40px;
+    border: rgba(0,0,0,0.5);;
+    border-radius: 4px;
+    padding: 0 10px;
+    font-size: 16px;
+    color: rgb(155, 154, 154);
+    background: rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+}
+.form-group > button {
+    padding: 13px;
+    border-radius: 10px;
+    border: #5d5d5d;
+    background: rgba(0,0,0,0.2);
+    color: #bbb;
+    cursor: pointer;
+}
+
+.form-group > button:hover, button:focus, input:focus {
+    transition: 0.2s;
+    outline: none;
+    background: rgba(0,0,0,0.5);
+}
+  
+/* account css */
+.blurred {
+    transition: 0.25s filter linear;
+    -webkit-transition: 0.25s filter linear;
+    -moz-transition: 0.25s filter linear;
+    -o-transition: 0.25s filter linear;
+    filter: blur(6px);
+    -webkit-filter: blur(6px);
+}
+.blurred:hover {
+    filter: blur(0);
+}
+
+#contents {
+    margin-top: 15px;
+    display: grid;
+    grid-template-rows: auto;
+    align-items: auto;
+}
+
+#contents > div {
+    margin-bottom: 30px;
+    text-align: center;
+    vertical-align: middle;
+    padding: 10px;
+    border: 1px solid #5d5d5d;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.2);
+}
+
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: var(--color-background-secondary);
+    color: white;
+    text-align: center;
+}
+.footer > p > a {
+    color: rgb(190, 190, 190);
+    text-decoration: none;
+}
