@@ -10,7 +10,8 @@ const Messages = {
     loginFail: 'Login failed due to an invalid request. Please try again later or reload the page.',
     invalidUsername: 'You need to enter a valid Username to login. Please try again.',
     invalidDetails: 'Your Username or UUID is invalid. Please try again.',
-    notLoggedIn: 'You need to login before accessing that page.'
+    notLoggedIn: 'You need to login before accessing that page.',
+    rateLimited: 'You are sending too many requests, please try again later.'
 }
 if (getParameterByName('unauthorized') === '') infoText.innerText = Messages.notLoggedIn;
 
@@ -36,6 +37,8 @@ submitButton.addEventListener('click', async(e) => {
                 case 401:
                     infoText.innerText = Messages.invalidDetails;
                     break;
+                case 429:
+                    infoText.innerText = Messages.rateLimited;
                 default:
                     infoText.innerText = 'An unknown error occured. Please try again later or reload the page.';
                     break;

@@ -7,5 +7,10 @@
             "dark":"#F4C2C2",
             "light":"#000000"
         }
+    },
+    "rateLimit": {
+        "ms": 120000,
+        "maxRequests": 100,
+        "errorMessage": "You are sending too many requests, please try again later."
     }
 }

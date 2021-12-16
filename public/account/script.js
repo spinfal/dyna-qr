@@ -3,6 +3,9 @@ const username = document.getElementById('username');
 const password = document.getElementById('password');
 const qrcode = document.getElementById('qr-code');
 const logout = document.getElementById('logout');
+const popup = document.getElementById('popup');
+const errorMsg = document.getElementById('errorMsg');
+const closeBtn = document.getElementById('closeBtn');
 
 fetch('/api/account/details', {
     method: 'GET',
@@ -23,7 +26,7 @@ fetch('/api/account/details', {
                         <button id="generate">Generate QR code</button>
                     </div>
                     `;
-                    document.getElementById('generate').addEventListener('click', () => generateQRCode(document.getElementById('qrContent').value));
+                    document.getElementById('generate').addEventListener('click', (e) => { if (e.isTrusted) generateQRCode(document.getElementById('qrContent').value) });
                 } else {
                     //const redirectID = data.redirectID;
                     qrcode.innerHTML = `
@@ -34,16 +37,22 @@ fetch('/api/account/details', {
                         <button id="deleteQR">Delete QR code</button>
                     </div>
                     `;
-                    document.getElementById('deleteQR').addEventListener('click', () => deleteQRCode(uuid));
-                    document.getElementById('editQR').addEventListener('click', () => editQRCode(uuid, prompt('Edit Destination', data[data.redirectID])));
+                    document.getElementById('deleteQR').addEventListener('click', (e) => { if (e.isTrusted) deleteQRCode(uuid) });
+                    document.getElementById('editQR').addEventListener('click', (e) => { if (e.isTrusted) editQRCode(uuid, prompt('Edit Destination', data[data.redirectID])) });
                 }
             });
             break;
         case 401:
+            localStorage.removeItem('uuid');
             window.location.href = '/account/login?unauthorized';
             break;
+        case 429:
+            res.text().then(data => {
+                showPopup(data);
+            });
+            break;
         default:
-            alert('An unknown error has occurred. You will be redirected to the login page to try again.');
+            showPopup('An unknown error has occurred. You will be redirected to the login page to try again.');
             localStorage.removeItem('uuid');
             setTimeout(() => window.location.href = '/account/login', 1000);
             break;
@@ -51,7 +60,7 @@ fetch('/api/account/details', {
 }).catch(console.error);
 
 const generateQRCode = (content) => {
-    if (content.length == 0) return alert('Please enter content to generate a QR code.');
+    if (content.length == 0) return showPopup('Please enter content to generate a QR code.');
 
     fetch(`/api/account/qrcode?content=${content}`, {
         method: "GET",
@@ -59,28 +68,7 @@ const generateQRCode = (content) => {
             'uuid': uuid
         }
     }).then(res => {
-        switch (res.status) {
-            case 200:
-                location.reload();
-                break;
-            case 409:
-                res.text().then(data => {
-                    return data;
-                });
-                break;
-            case 400:
-                res.text().then(data => {
-                    return data;
-                });
-                break;
-            case 401:
-                res.text().then(data => {
-                    return data;
-                });
-                break;
-            default:
-                return 500;
-        }
+        checkStatus(res);
     }).catch(console.error);
 }
 
@@ -95,41 +83,66 @@ const editQRCode = (uuid, newDest) => {
       'destination': newDest
     })
   }).then(res => {
-    switch (res.status) {
-      case 204:
-          location.reload();
-          break;
-      case 401:
-          res.text().then(data => {
-              alert(data);
-          });
-          break;
-      default:
-           return 500;
-    }
+      checkStatus(res);
   }).catch(console.error);
 }
 
 const deleteQRCode = (uuid) => {
-    fetch('/api/account/qrcode', {
-        method: 'DELETE',
-        headers: {
-            'uuid': uuid
+    if (confirm('Are you sure you want to delete your QR code?')) {
+        fetch('/api/account/qrcode', {
+            method: 'DELETE',
+            headers: {
+                'uuid': uuid
+            }
+        }).then(res => {
+            checkStatus(res);
+        }).catch(console.error);
+    }
+}
+
+const checkStatus = (res) => {
+    switch (res.status) {
+        case 200:
+            location.reload();
+            break;
+        case 204:
+            location.reload();
+            break;
+        case 409:
+            res.text().then(data => {
+                showPopup(data);
+            });
+            break;
+        case 400:
+            res.text().then(data => {
+                showPopup(data);
+            });
+            break;
+        case 401:
+            res.text().then(data => {
+                showPopup(data);
+            });
+            break;
+        case 429:
+            res.text().then(data => {
+                showPopup(data);
+            });
+            break;
+        default:
+            return 500;
+    }
+}
+
+const showPopup = (msg) => {
+    errorMsg.innerText = msg ?? '';
+    popup.addEventListener('close', () => {
+        try {
+            document.getElementById('qrContent').focus();
+        } catch {
+            // do nothing lol
         }
-    }).then(res => {
-        switch (res.status) {
-            case 204:
-                location.reload();
-                break;
-            case 401:
-                res.text().then(data => {
-                    return data;
-                });
-                break;
-            default:
-                return 500;
-        }
-    }).catch(console.error);
+    });
+    popup.showModal();
 }
 
 window.onload = () => {
@@ -137,6 +150,13 @@ window.onload = () => {
         if (e.isTrusted) {
             localStorage.removeItem('uuid');
             setTimeout(() => window.location.href = '/', 500);
+        }
+    });
+    closeBtn.addEventListener('click', (e) => {
+        if (e.isTrusted) {
+            errorMsg.innerText = '';
+            popup.close();
+            popup.removeEventListener('close', () => console.log('modal closed'));
         }
     });
 }

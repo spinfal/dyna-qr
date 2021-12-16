@@ -3,6 +3,7 @@
 :root {
     --color-background: #31037D;
     --color-background-secondary: #280166;
+    --dialog-background: #7b29ff;
     --axis-x: 1px;
     --axis-y: 1rem;
     --delay: 10;
@@ -18,7 +19,8 @@
     --font-name: Righteous;
 }
   
-html, body {
+html, body, dialog {
+    color: var(--color-white);
     font-size: 24px;
     overflow-y: hidden;
     -webkit-font-smoothing: antialiased;
@@ -27,8 +29,19 @@ html, body {
   
 body {
     font-family: var(--font-name);
-    color: var(--color-white);
     background-color: var(--color-background);
+}
+
+dialog {
+    background-color: var(--dialog-background);
+    border-radius: 10px;
+    border-width: 1px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    justify-content: center;
+    align-items: center;
 }
 
 /* login and register css */

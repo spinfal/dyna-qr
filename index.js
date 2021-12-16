@@ -4,15 +4,22 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require("express-rate-limit");
 const helmet = require('helmet');
 const app = express();
 const config = require('./config.json');
+const reg = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)$/;
 
 // Route Middlewares
 app.use(helmet());
 app.use(express.static('public')); // serve static files
 app.use(cors());
-app.options('*', cors());
+app.options('https://dynaqr.clit.repl.co', cors());
+const apiLimiter = rateLimit({
+  windowMs: config.rateLimit.ms, // 2 minutes (120000) is the default
+  max: config.rateLimit.maxRequests,
+  message: config.rateLimit.errorMessage
+});
 
 /*
 // Handle 404
@@ -20,6 +27,8 @@ app.use((req, res) => {
   res.sendFile(__dirname + '/public/404.html', 404);
 });
 */
+
+app.use("/api/", apiLimiter);
 
 app.post('/api/account/register', (req, res) => {
   if (req.headers['content-type'] !== 'application/x-www-form-urlencoded; charset=utf-8') return res.status(400).send('Invalid Content-Type');
@@ -78,7 +87,7 @@ app.get('/api/account/destination', (req, res) => {
     if (err == null) {
       const urls = new JSONdb(dataPath);
       if (urls.has(req.query.id)) {
-        switch (req.query?.redirect) {
+        switch (req.query.redirect) {
           case 'true':
             console.log(urls.get(req.query.id));
             res.redirect(urls.get(req.query.id));
@@ -99,6 +108,9 @@ app.get('/api/account/destination', (req, res) => {
 
 app.get('/api/account/qrcode', (req, res) => {
   if (!req.query.content) return res.status(400).send('No QR code content provided.');
+  if (!reg.test(req.query.content)) {
+      return res.status(400).send('You need to provide a valid URL.');
+  }
   const dataPath = `data/urls.json`;
   const userPath = `data/${req.headers.uuid}.json`;
   fs.stat(userPath, function(err) {
@@ -120,6 +132,36 @@ app.get('/api/account/qrcode', (req, res) => {
       }
     } else if (err.code === 'ENOENT') {
       return res.status(401).send('Unable to generate QR code as you are either not logged in or you have provided an invalid UUID.');
+    } else {
+      console.log('[ERROR]: ' + err.code);
+      return res.sendStatus(500);
+    }
+  });
+});
+
+app.patch('/api/account/qrcode', express.json(), (req, res) => {
+  if (!req.body.destination) return res.status(400).send('No QR code content provided.');
+  if (!reg.test(req.body.destination)) {
+      return res.status(400).send('You need to provide a valid URL.');
+  }
+  const dataPath = `data/urls.json`;
+  const userPath = `data/${req.headers.uuid}.json`;
+  fs.stat(userPath, function(err) {
+    if (err == null) {
+      const urls = new JSONdb(dataPath);
+      const db = new JSONdb(userPath);
+      if (db.has('redirectID')) {
+        const ID = db.get('redirectID');
+        db.set(ID, req.body.destination);
+        urls.set(ID, req.body.destination);
+        return res.sendStatus(204);
+      } else if (!db.has('redirectID')) {
+        return res.status(404).send('You do not have a destination set yet.');
+      } else {
+        return res.sendStatus(500);
+      }
+    } else if (err.code === 'ENOENT') {
+      return res.status(401).send('Unable to edit the QR code destination as you are either not logged in or you have provided an invalid UUID.');
     } else {
       console.log('[ERROR]: ' + err.code);
       return res.sendStatus(500);
