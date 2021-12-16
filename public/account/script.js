@@ -25,13 +25,17 @@ fetch('/api/account/details', {
                     `;
                     document.getElementById('generate').addEventListener('click', () => generateQRCode(document.getElementById('qrContent').value));
                 } else {
+                    //const redirectID = data.redirectID;
                     qrcode.innerHTML = `
                     <div class="form-group">
+                        <span><a href="${data[data.redirectID]}" target="_blank">Destination</a></span><br>
                         <img src="${data.qrcode}"><br>
+                        <button id="editQR">Edit Destination</button>
                         <button id="deleteQR">Delete QR code</button>
                     </div>
                     `;
                     document.getElementById('deleteQR').addEventListener('click', () => deleteQRCode(uuid));
+                    document.getElementById('editQR').addEventListener('click', () => editQRCode(uuid, prompt('Edit Destination', data[data.redirectID])));
                 }
             });
             break;
@@ -48,10 +52,6 @@ fetch('/api/account/details', {
 
 const generateQRCode = (content) => {
     if (content.length == 0) return alert('Please enter content to generate a QR code.');
-    if (!/^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)$/.test(content)) {
-        document.getElementById('qrContent').value = "";
-        return alert('Please enter a valid URL.');
-    }
 
     fetch(`/api/account/qrcode?content=${content}`, {
         method: "GET",
@@ -68,6 +68,11 @@ const generateQRCode = (content) => {
                     return data;
                 });
                 break;
+            case 400:
+                res.text().then(data => {
+                    return data;
+                });
+                break;
             case 401:
                 res.text().then(data => {
                     return data;
@@ -77,6 +82,32 @@ const generateQRCode = (content) => {
                 return 500;
         }
     }).catch(console.error);
+}
+
+const editQRCode = (uuid, newDest) => {
+  fetch('/api/account/qrcode', {
+    method: "PATCH",
+    headers: {
+      'Content-Type': 'application/json',
+      'uuid': uuid
+    },
+    body: JSON.stringify({
+      'destination': newDest
+    })
+  }).then(res => {
+    switch (res.status) {
+      case 204:
+          location.reload();
+          break;
+      case 401:
+          res.text().then(data => {
+              alert(data);
+          });
+          break;
+      default:
+           return 500;
+    }
+  }).catch(console.error);
 }
 
 const deleteQRCode = (uuid) => {
