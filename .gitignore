@@ -1,4 +1,8 @@
+# MISC
+.replit
+
 # JSON
+data/
 package-lock.json
 
 # Logs
