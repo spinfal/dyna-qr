@@ -10,6 +10,7 @@
 - [x] QR code creation
 - [x] Allow user to change the QR code destination __without having to make a new QR code__
 - [x] Show the QR code destination URL on the account page
+- [ ] Allow users to customize their QR code color
 
 ## How to setup
 - Clone this repo or download the source
