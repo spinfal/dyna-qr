@@ -19,9 +19,9 @@
 - Start it up by running `node .` in the root folder or running `node path/to/index.js`
 
 ## How do I use?
-- If you do not wish to set things up on your own, you can use this link https://dynaqr.clit.repl.co
+- If you do not wish to set things up on your own, you can use this link https://qr.spin.tk/
 - Register an account or Login if you already have one
-- You should be redirected to https://dynaqr.clit.repl.co/account/
+- You should be redirected to https://qr.spin.tk/account/
 - Simply enter a URL into the input field and share your QR code
 
 ###### Made with <3 by spin | [spin.tk](https://spin.tk)
