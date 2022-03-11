@@ -5,6 +5,14 @@ const infoText = document.getElementById('info');
 const username = document.getElementById('username');
 const password = document.getElementById('password');
 
+String.prototype.htmlEscape = function () {
+    const span = document.createElement('span');
+    const txt = document.createTextNode('');
+    span.appendChild(txt);
+    txt.data = this;
+    return span.innerHTML;
+};
+
 const Messages = {
     registerSuccess: 'Registration successful, you may now access the <a href="/account/">account</a> page.<br>Here is your UUID: <br>',
     registerFail: 'Registration failed due to an invalid request. Please try again later or reload the page.',
@@ -12,7 +20,7 @@ const Messages = {
     usernameTaken: 'That username is already taken. Please try another one.'
 }
 
-submitButton.addEventListener('click', async(e) => {
+submitButton.addEventListener('click', async (e) => {
     if (e.isTrusted) {
         if (!/^[a-z0-9_-]{3,15}$/.test(username.value)) return infoText.innerText = Messages.invalidUsername;
 
@@ -25,8 +33,8 @@ submitButton.addEventListener('click', async(e) => {
             switch (res.status) {
                 case 200:
                     res.text().then(text => {
-                        localStorage.setItem('uuid', text);
-                        infoText.innerHTML = Messages.registerSuccess + `<font color="green">${text}</font>`;
+                        localStorage.setItem('uuid', text.htmlEscape());
+                        infoText.innerHTML = Messages.registerSuccess + `<font color="green">${text.htmlEscape()}</font>`;
                     });
                     break;
                 case 400:
