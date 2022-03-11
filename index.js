@@ -10,6 +10,10 @@ const app = express();
 const config = require('./config.json');
 const reg = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)$/;
 
+String.prototype.htmlEscape = function () {
+  return ('' + this).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+};
+
 // Route Middlewares
 app.use(helmet());
 app.use(express.static('public')); // serve static files
@@ -34,19 +38,22 @@ app.post('/api/account/register', (req, res) => {
   if (req.headers['content-type'] !== 'application/x-www-form-urlencoded; charset=utf-8') return res.status(400).send('Invalid Content-Type');
 
   if (req.query.username && req.query.password) {
-    if (!/^[a-z0-9_-]{3,15}$/.test(req.query.username)) return res.status(400).send('Invalid Username');
+    const un = req.query.username.htmlEscape();
+    const pw = req.query.password.htmlEscape();
+
+    if (!/^[a-z0-9_-]{3,15}$/.test(un)) return res.status(400).send('Invalid Username');
 
     // check if username is taken
     const usernameDB = new JSONdb(`data/usernames.json`);
-    if (usernameDB.has(req.query.username)) return res.sendStatus(409);
+    if (usernameDB.has(un)) return res.sendStatus(409);
 
     const uuid = uuidv4();
     const db = new JSONdb(`data/${uuid}.json`);
     
-    db.set('username', req.query.username);
-    db.set('password', req.query.password);
+    db.set('username', un);
+    db.set('password', pw);
     
-    usernameDB.set(req.query.username, uuid);
+    usernameDB.set(un, uuid);
     return res.status(200).send(uuid);
   }
 });
@@ -66,7 +73,7 @@ app.post('/api/account/login', (req, res) => {
 });
 
 app.get('/api/account/details', (req, res) => {
-  const userPath = `data/${req.headers.uuid}.json`;
+  const userPath = `data/${req.headers.uuid.replace(/\//g, '\\\\')}.json`;
   fs.stat(userPath, function(err) {
     if (err == null) {
       const db = new JSONdb(userPath);
@@ -108,11 +115,14 @@ app.get('/api/account/destination', (req, res) => {
 
 app.get('/api/account/qrcode', (req, res) => {
   if (!req.query.content) return res.status(400).send('No QR code content provided.');
-  if (!reg.test(req.query.content)) {
+
+  const content = req.query.content.htmlEscape();
+  
+  if (!reg.test(content)) {
       return res.status(400).send('You need to provide a valid URL.');
   }
   const dataPath = `data/urls.json`;
-  const userPath = `data/${req.headers.uuid}.json`;
+  const userPath = `data/${req.headers.uuid.replace(/\//g, '\\\\')}.json`;
   fs.stat(userPath, function(err) {
     if (err == null) {
       const urls = new JSONdb(dataPath);
@@ -121,13 +131,13 @@ app.get('/api/account/qrcode', (req, res) => {
         return res.status(409).send(db.get('qrcode'));
       } else {
         const ID = Math.floor(+new Date() / 100);
-        urls.set(ID, req.query.content);
-        db.set(ID, req.query.content);
+        urls.set(ID, content);
+        db.set(ID, content);
         db.set('redirectID', ID);
         QRCode.toDataURL(`https://${config.domain}/api/account/destination?id=${ID}&redirect=true`, config.qrOptions, function (qrErr, url) {
           if (qrErr) return res.status(500).send(qrErr);
-          db.set('qrcode', url);
-          return res.status(200).send(url);
+          db.set('qrcode', url.htmlEscape());
+          return res.status(200).send(url.htmlEscape());
         });
       }
     } else if (err.code === 'ENOENT') {
@@ -141,19 +151,22 @@ app.get('/api/account/qrcode', (req, res) => {
 
 app.patch('/api/account/qrcode', express.json(), (req, res) => {
   if (!req.body.destination) return res.status(400).send('No QR code content provided.');
-  if (!reg.test(req.body.destination)) {
+
+  const destination = req.body.destination.htmlEscape();
+
+  if (!reg.test(destination)) {
       return res.status(400).send('You need to provide a valid URL.');
   }
   const dataPath = `data/urls.json`;
-  const userPath = `data/${req.headers.uuid}.json`;
+  const userPath = `data/${req.headers.uuid.replace(/\//g, '\\\\')}.json`;
   fs.stat(userPath, function(err) {
     if (err == null) {
       const urls = new JSONdb(dataPath);
       const db = new JSONdb(userPath);
       if (db.has('redirectID')) {
         const ID = db.get('redirectID');
-        db.set(ID, req.body.destination);
-        urls.set(ID, req.body.destination);
+        db.set(ID, destination);
+        urls.set(ID, destination);
         return res.sendStatus(204);
       } else if (!db.has('redirectID')) {
         return res.status(404).send('You do not have a destination set yet.');
@@ -171,7 +184,7 @@ app.patch('/api/account/qrcode', express.json(), (req, res) => {
 
 app.delete('/api/account/qrcode', (req, res) => {
   const dataPath = `data/urls.json`;
-  const userPath = `data/${req.headers.uuid}.json`;
+  const userPath = `data/${req.headers.uuid.replace(/\//g, '\\\\')}.json`;
   fs.stat(userPath, function(err) {
     if (err == null) {
       const urls = new JSONdb(dataPath);
